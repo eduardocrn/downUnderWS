@@ -23,24 +23,24 @@ public class DownUnderServer {
     }
     
     @WebMethod(operationName = "preRegistro")
-    public String registra(@WebParam(name = "nome") String txt) {
-        return server.registraJogador(txt) + "";
-    }
-
-    @WebMethod(operationName = "registraJogador")
-    public String registra(@WebParam(name = "nomeJogador1") String nomeJogador1, @WebParam(name = "idJogador1") int idJogador1, 
+    public String preRegistro(@WebParam(name = "nomeJogador1") String nomeJogador1, @WebParam(name = "idJogador1") int idJogador1, 
             @WebParam(name = "nomeJogador2") String nomeJogador2, @WebParam(name = "idJogador2") int idJogador2) {
         return server.preRegistro(nomeJogador1, idJogador1, nomeJogador2, idJogador2) + "";
     }
     
+    @WebMethod(operationName = "registraJogador")
+    public String registra(@WebParam(name = "nome") String nomeJogador) {
+        return server.registraJogador(nomeJogador) + "";
+    }
+    
     @WebMethod(operationName = "encerraPartida")
-    public String encerraPartida(@WebParam(name = "id") String id) {
-        return server.encerraPartida(Integer.parseInt(id)) + "";
+    public String encerraPartida(@WebParam(name = "id") int id) {
+        return server.encerraPartida(id) + "";
     }
 
     @WebMethod(operationName = "temPartida")
-    public String temPartida(@WebParam(name = "id") String id) {
-        return server.temPartida(Integer.parseInt(id)) + "";
+    public String temPartida(@WebParam(name = "id") int id) {
+        return server.temPartida(id) + "";
     }
 
     @WebMethod(operationName = "ehMinhaVez")
