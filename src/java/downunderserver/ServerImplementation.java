@@ -129,7 +129,7 @@ public class ServerImplementation implements DownUnderInterface {
             }
 
         } catch (Exception e) {
-            return 1;
+            return -1;
         }
     }
 

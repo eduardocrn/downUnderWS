@@ -44,22 +44,22 @@ public class DownUnderServer {
     }
 
     @WebMethod(operationName = "ehMinhaVez")
-    public String ehMinhaVez(@WebParam(name = "id") String id) {
-        return server.ehMinhaVez(Integer.parseInt(id)) + "";
+    public String ehMinhaVez(@WebParam(name = "id") int id) {
+        return server.ehMinhaVez(id) + "";
     }
 
     @WebMethod(operationName = "obtemTabuleiro")
-    public String obtemTabuleiro(@WebParam(name = "id") String id) {
-        return server.obtemTabuleiro(Integer.parseInt(id)) + "";
+    public String obtemTabuleiro(@WebParam(name = "id") int id) {
+        return server.obtemTabuleiro(id) + "";
     }
 
     @WebMethod(operationName = "soltaEsfera")
-    public String soltaEsfera(@WebParam(name = "id") String id, @WebParam(name = "posicao") String pos) {
-        return server.soltaEsfera(Integer.parseInt(id), Integer.parseInt(pos)) + "";
+    public String soltaEsfera(@WebParam(name = "id") int id, @WebParam(name = "posicao") int pos) {
+        return server.soltaEsfera(id, pos) + "";
     }
 
     @WebMethod(operationName = "obtemOponente")
-    public String obtemOponente(@WebParam(name = "id") String id) {
-        return server.obtemOponente(Integer.parseInt(id)) + "";
+    public String obtemOponente(@WebParam(name = "id") int id) {
+        return server.obtemOponente(id) + "";
     }
 }
