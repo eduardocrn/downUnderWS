@@ -1,6 +1,8 @@
 package downunderserver;
 
 public interface DownUnderInterface {
+    
+        public int preRegistro(String nomeJogador1, int idJogador1, String nomeJogador2, int idJogador2);
 	
 	public int registraJogador(String nomeJogador);
 	

@@ -11,23 +11,26 @@ import javax.jws.WebParam;
 
 /**
  *
- * @author 12205139
+ * @author Eduardo
  */
-@WebService(serviceName = "DownUnderServer")
+@WebService(serviceName = "DownUnderWS")
 public class DownUnderServer {
-    
+
     private static ServerImplementation server;
     
     public DownUnderServer() {
         server =  new ServerImplementation();
     }
-
-    /**
-     * This is a sample web service operation
-     */
-    @WebMethod(operationName = "registraJogador")
+    
+    @WebMethod(operationName = "preRegistro")
     public String registra(@WebParam(name = "nome") String txt) {
         return server.registraJogador(txt) + "";
+    }
+
+    @WebMethod(operationName = "registraJogador")
+    public String registra(@WebParam(name = "nomeJogador1") String nomeJogador1, @WebParam(name = "idJogador1") int idJogador1, 
+            @WebParam(name = "nomeJogador2") String nomeJogador2, @WebParam(name = "idJogador2") int idJogador2) {
+        return server.preRegistro(nomeJogador1, idJogador1, nomeJogador2, idJogador2) + "";
     }
     
     @WebMethod(operationName = "encerraPartida")
