@@ -1,68 +1,72 @@
 package downunderserver;
 
 public class Tabuleiro {
-	
-	private final char[][] board;
-	private final int[] ultimasJogadas = new int[]{-1, -1};
-	
-	public Tabuleiro() {
-		board = new char[5][8];
-	}
-	
-	public int colocaEsfera(char esfera, int posicao) {
-		char[] linha = board[posicao];
-		
-		for(int i=0; i<linha.length; i++)
-			if (linha[i] == 0) {
-				linha[i] = esfera;
-				ultimasJogadas[0] = ultimasJogadas[1];
-				ultimasJogadas[1] = posicao;
-				return 1;
-			}
 
-		return 0;
-	}
+    private final char[][] board;
+    private final int[] ultimasJogadas = new int[]{-1, -1};
 
-	public boolean estaCompleto() {
-		for (int i=0; i<5; i++)
-			if (board[i][7] == 0)
-				return false;
+    public Tabuleiro() {
+        board = new char[5][8];
+    }
 
-		return true;
-	}
+    public int colocaEsfera(char esfera, int posicao) {
+        char[] linha = board[posicao];
 
-	public String estadoAtual() {
-		StringBuilder estado = new StringBuilder("");
+        for (int i = 0; i <= linha.length; i++) {
+            if (linha[i] == 0) {
+                linha[i] = esfera;
+                ultimasJogadas[0] = ultimasJogadas[1];
+                ultimasJogadas[1] = posicao;
+                return 1;
+            }
+        }
 
-		if (estaCompleto()) {
-			for (int i=0; i<5; i++) {
-				for (int j=0; j<8; j++) {
-					estado.append(board[i][j]);
-					estado.append('|');
-				}
-				estado.append("\n");
-				estado.append("- - - - - - - -\n");
-			}
-		} else {
-			for (int i=0; i<5; i++) {
-				if (board[i][7] == 0)
-					estado.append('-');
-				else estado.append(board[i][7]);
-			}
+        return 0;
+    }
 
-			estado.append(".....");
+    public boolean estaCompleto() {
+        for (int i = 0; i < 5; i++) {
+            if (board[i][7] == 0) {
+                return false;
+            }
+        }
 
-			if (ultimasJogadas[0] > -1)
-				estado.setCharAt(5 + ultimasJogadas[0], '^');
+        return true;
+    }
 
-			if (ultimasJogadas[1] > -1)
-				estado.setCharAt(5 + ultimasJogadas[1], '^');
-		}
+    public String estadoAtual() {
+        StringBuilder estado = new StringBuilder("");
 
-		return estado.toString();
-	}
-	
-	public char[][] getTabuleiro() {
-		return board;
-	}
+        if (estaCompleto()) {
+            for (int j = 7; j >= 0; j--) {
+                for (int i = 0; i < 5; i++) {
+                    estado.append(board[i][j]);
+                }
+            }
+        } else {
+            for (int i = 0; i < 5; i++) {
+                if (board[i][7] == 0) {
+                    estado.append('-');
+                } else {
+                    estado.append(board[i][7]);
+                }
+            }
+
+            estado.append(".....");
+
+            if (ultimasJogadas[0] > -1) {
+                estado.setCharAt(5 + ultimasJogadas[0], '^');
+            }
+
+            if (ultimasJogadas[1] > -1) {
+                estado.setCharAt(5 + ultimasJogadas[1], '^');
+            }
+        }
+
+        return estado.toString();
+    }
+
+    public char[][] getTabuleiro() {
+        return board;
+    }
 }

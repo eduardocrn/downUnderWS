@@ -9,22 +9,12 @@ public class Partida {
     private int jogadorAtual = -1;
     private int countJogadas = 0;
     private String tipoVitoria = "NORMAL";
-    private Thread threadJogada;
-    private long tempoEncerrada;
+    int score[] = new int[]{0, 0}; // C, E
 
     public Partida(Jogador jogador1) {
         jogadores[0] = jogador1;
         status = StatusPartida.AGUARDANDO;
 
-        tabuleiro = new Tabuleiro();
-        timerSegundoJogador();
-    }
-
-    public Partida(Jogador jogador1, Jogador jogador2) {
-        jogadores[0] = jogador1;
-        jogadores[1] = jogador2;
-        status = StatusPartida.INICIADA;
-        jogadorAtual = 0;
         tabuleiro = new Tabuleiro();
     }
 
@@ -57,10 +47,6 @@ public class Partida {
             }
             return 6;
         }
-    }
-
-    public long getTempoEncerrada() {
-        return tempoEncerrada;
     }
 
     public StatusPartida statusPartida() {
@@ -109,6 +95,16 @@ public class Partida {
         return true;
     }
 
+    public int getIdJogador(String nomeJogador) {
+        for (int i = 0; i < jogadores.length; i++) {
+            if (jogadores[i] != null && jogadores[i].getNome().equals(nomeJogador)) {
+                return jogadores[i].getId();
+            }
+        }
+
+        return -1;
+    }
+
     public Jogador getOponente(int idJogador) {
         if (jogadores[0].getId() == idJogador) {
             return jogadores[1];
@@ -116,32 +112,25 @@ public class Partida {
         return jogadores[0];
     }
 
-    public boolean removeJogador(int idJogador) {
-        if (status == StatusPartida.INICIADA) {
-            vencedor = getOponente(idJogador);
+    public Jogador getOponente(String nomeJogador) {
+        if (jogadores[0].getNome().equals(nomeJogador)) {
+            return jogadores[1];
         }
-
-        tipoVitoria = "WO";
-
-        status = StatusPartida.ENCERRADA;
-
-        tempoEncerrada = System.currentTimeMillis();
-
-        removeJogadores();
-
-        return true;
+        return jogadores[0];
     }
-
-    public void removeJogadores() {
-        jogadores[0].desativar();
-
-        if (jogadores[1] != null) {
-            jogadores[1].desativar();
-        }
+    
+    public boolean temJogador() {
+        return jogadores[0].estaAtivo() || jogadores[1].estaAtivo();
     }
 
     public String getTabuleiro() {
-        return tabuleiro.estadoAtual();
+        String tab = tabuleiro.estadoAtual();
+
+        if (tabuleiro.estaCompleto()) {
+            tab += "," + score[0] + "," + score[1];
+        }
+
+        return tab;
     }
 
     public int realizaJogada(int idJogador, int posicao) {
@@ -159,12 +148,6 @@ public class Partida {
             esfera = 'E';
         }
 
-        if (threadJogada != null) {
-            threadJogada.interrupt();
-        }
-
-        threadJogada = timerJogada();
-
         int resultado = tabuleiro.colocaEsfera(esfera, posicao);
 
         if (resultado == 1) {
@@ -178,76 +161,30 @@ public class Partida {
         if (tabuleiro.estaCompleto()) {
             calculaPontuacao();
             status = StatusPartida.ENCERRADA;
-            tempoEncerrada = System.currentTimeMillis();
         }
 
         return resultado;
     }
 
     public synchronized void encerraPartida(int idJogador) {
-        removeJogadores();
 
         if (status == StatusPartida.INICIADA) {
             tipoVitoria = "WO";
         }
 
         status = StatusPartida.ENCERRADA;
-        tempoEncerrada = System.currentTimeMillis();
-    }
 
-    private Thread timerJogada() {
-
-        Thread t = new Thread() {
-            public void run() {
-                try {
-                    Thread.sleep(60000);
-
-                    tempoEncerrada = System.currentTimeMillis();
-
-                    if (status == StatusPartida.INICIADA) {
-                        tipoVitoria = "WO_INTERROMPIDA";
-                        vencedor = jogadorAtual == 0 ? jogadores[1] : jogadores[0];
-                    }
-
-                    status = StatusPartida.ENCERRADA;
-
-                } catch (InterruptedException e) {
-                    if (tipoVitoria == "WO_INTERROMPIDA") {
-                        tipoVitoria = "NORMAL";
-                        status = StatusPartida.INICIADA;
-                    }
-                }
-
-            }
-        };
-
-        t.start();
-
-        return t;
-    }
-
-    private void timerSegundoJogador() {
-        new Thread() {
-            public void run() {
-                try {
-                    Thread.sleep(120000);
-
-                    if (status == StatusPartida.AGUARDANDO) {
-                        jogadores[0].desativar();
-                        status = StatusPartida.TIMEOUT;
-                        tempoEncerrada = System.currentTimeMillis();
-                    }
-
-                } catch (InterruptedException e) {
-                }
-            }
-        }.start();
+        if (jogadores[0].getId() == idJogador) {
+            jogadores[0].desativar();
+        } else {
+            jogadores[1].desativar();
+        }
     }
 
     private void calculaPontuacao() {
         char board[][] = tabuleiro.getTabuleiro();
 
-        int score[] = new int[]{0, 0}; // C, E
+        score = new int[]{0, 0}; // C, E
 
         int count[] = new int[]{0, 0}; // C, E
 
@@ -375,6 +312,15 @@ public class Partida {
                     count[0] = 0;
                 }
             }
+            
+            if (count[0] >= 4) {
+                score[0] += count[0] - 3;
+            }
+            if (count[1] >= 4) {
+                score[1] += count[1] - 3;
+            }
+
+            count = new int[]{0, 0};
         }
 
         count = new int[]{0, 0};
@@ -435,11 +381,20 @@ public class Partida {
                     count[0] = 0;
                 }
             }
+            
+            if (count[0] >= 4) {
+                score[0] += count[0] - 3;
+            }
+            if (count[1] >= 4) {
+                score[1] += count[1] - 3;
+            }
+
+            count = new int[]{0, 0};
         }
 
         if (score[0] > score[1]) {
             vencedor = jogadores[0];
-        } else {
+        } else if (score[0] < score[1]){
             vencedor = jogadores[1];
         }
     }

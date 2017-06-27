@@ -10,56 +10,71 @@ package downunderserver;
  * @author Eduardo
  */
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ServerImplementation implements DownUnderInterface {
 
-    private static final int MAX_PARTIDAS = 50;
+    private static final int MAX_PARTIDAS = 500;
 
     private int idCount = 100;
 
-    private static final long serialVersionUID = 189L;
-
     private final ArrayList<Partida> partidas = new ArrayList<>();
 
+    private final HashMap<String, String> preRegister = new HashMap<>();
+
     public ServerImplementation() {
-        timerPartida();
+
     }
 
     @Override
     public int preRegistro(String nomeJogador1, int idJogador1, String nomeJogador2, int idJogador2) {
 
-        if (partidas.size() == MAX_PARTIDAS) {
-            return -2;
-        }
-
-        Jogador j1 = new Jogador(nomeJogador1, idJogador1);
-        Jogador j2 = new Jogador(nomeJogador2, idJogador2);
-
-        Partida novaPartida = new Partida(j1, j2);
-
-        partidas.add(novaPartida);
+        preRegister.put(nomeJogador1, idJogador1 + ";" + idJogador2);
+        preRegister.put(nomeJogador2, idJogador2 + ";" + idJogador1);
 
         return 0;
     }
 
     @Override
-    public int registraJogador(String nomeJogador) {
-        if (partidas.size() == MAX_PARTIDAS) {
-            return -2;
-        }
+    public synchronized int registraJogador(String nomeJogador) {
+        String id = "";
+        Partida partidaExistente = null;
 
-        Partida partidaExistente = buscaPartidaPorJogador(nomeJogador);
+        if (preRegister.containsKey(nomeJogador)) {
+            id = preRegister.get(nomeJogador);
+
+            preRegister.remove(nomeJogador);
+
+            partidaExistente = buscaPartidaPorJogador(Integer.parseInt(id.split(";")[1]));
+            if (partidaExistente == null) {
+                partidas.add(new Partida(new Jogador(nomeJogador, Integer.parseInt(id.split(";")[0]))));
+            } else {
+                partidaExistente.adicionaOponente(new Jogador(nomeJogador, Integer.parseInt(id.split(";")[0])));
+            }
+
+            return Integer.parseInt(id.split(";")[0]);
+        } else {
+            partidaExistente = buscaPartidaPorJogador(nomeJogador);
+        }
+        
+        if (partidas.size() == MAX_PARTIDAS) {
+            if (partidas.get(partidas.size()).statusPartida() == StatusPartida.INICIADA)
+                return -2;
+        }
 
         if (partidaExistente != null) {
             return -1;
         }
 
-        String id = ("" + Math.random()).substring(2, 9);
-        id = idCount + id;
+        if (id == "") {
+            id = ("" + Math.random()).substring(2, 9);
+            synchronized (this) {
+                id = idCount + id;
+                idCount++;
+            }
+        }
 
         Jogador novo = new Jogador(nomeJogador, Integer.parseInt(id));
-
-        idCount++;
 
         if (!alocaJogador(novo)) {
             return -2;
@@ -78,6 +93,9 @@ public class ServerImplementation implements DownUnderInterface {
         }
 
         p.encerraPartida(idJogador);
+        
+        if (!p.temJogador())
+            removePartidaPorJogador(idJogador);
 
         return 0;
     }
@@ -148,25 +166,29 @@ public class ServerImplementation implements DownUnderInterface {
     public int soltaEsfera(int idJogador, int posicao) {
         Partida partida = buscaPartidaPorJogador(idJogador);
 
-        if (partida.statusPartida() == StatusPartida.AGUARDANDO) {
-            return -2;
+        try {
+            if (partida.statusPartida() == StatusPartida.AGUARDANDO) {
+                return -2;
+            }
+
+            if (partida.getJogadorAtual().getId() != idJogador) {
+                return -3;
+            }
+
+            if (partida.statusPartida() == StatusPartida.TIMEOUT) {
+                return 2;
+            }
+
+            int resultado = partida.realizaJogada(idJogador, posicao);
+
+            if (partida.statusPartida() == StatusPartida.ENCERRADA || partida.statusPartida() == StatusPartida.TIMEOUT) {
+                int i = 0;
+            }
+
+            return resultado;
+        } catch (Exception e) {
+            return -1;
         }
-
-        if (partida.getJogadorAtual().getId() != idJogador) {
-            return -3;
-        }
-
-        if (partida.statusPartida() == StatusPartida.TIMEOUT) {
-            return 2;
-        }
-
-        int resultado = partida.realizaJogada(idJogador, posicao);
-
-        if (partida.statusPartida() == StatusPartida.ENCERRADA || partida.statusPartida() == StatusPartida.TIMEOUT) {
-            partida.removeJogadores();
-        }
-
-        return resultado;
     }
 
     @Override
@@ -190,26 +212,16 @@ public class ServerImplementation implements DownUnderInterface {
         return null;
     }
 
-    private synchronized void timerPartida() {
-        new Thread() {
-            public void run() {
-                try {
-                    while (true) {
-                        Thread.sleep(60000);
-                        long now = System.currentTimeMillis();
-                        for (int i = 0; i < partidas.size(); i++) {
-                            if (partidas.get(i).statusPartida() == StatusPartida.ENCERRADA || partidas.get(i).statusPartida() == StatusPartida.TIMEOUT) {
-                                if (now - partidas.get(i).getTempoEncerrada() > 60000) {
-                                    partidas.remove(i);
-                                }
-                            }
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+    private synchronized boolean removePartidaPorJogador(int id) {
+        Partida p = null;
+        for (int i = 0; i < partidas.size(); i++) {
+            if (partidas.get(i).verificaJogador(id)) {
+                partidas.remove(i);
+                return true;
             }
-        }.start();
+        }
+
+        return false;
     }
 
     private synchronized Partida buscaPartidaPorJogador(String nomeJogador) {
